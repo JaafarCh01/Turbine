@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('issues', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('revisionId')->constrained('revisions');
-            $table->string('description');
+            $table->text('description');
             $table->string('severity')->default(Severity::MEDIUM->value); // Enum as string
             $table->dateTime('reportedAt');
             $table->timestamps(); // createdAt, updatedAt

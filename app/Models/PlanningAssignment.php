@@ -14,6 +14,7 @@ class PlanningAssignment extends Model
 
     public $incrementing = false;
     protected $keyType = 'uuid';
+    public $timestamps = false;
 
     protected $fillable = [
         'planningId',
