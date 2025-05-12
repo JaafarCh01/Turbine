@@ -93,4 +93,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Revision::class, 'performedBy');
     }
+
+    /**
+     * Get the name of the column that should be used for the password.
+     *
+     * @return string
+     */
+    public function getAuthPasswordName()
+    {
+        return 'passwordHash';
+    }
 }
