@@ -13,6 +13,7 @@ use App\Models\Revision;
 use App\Models\Task;
 use App\Models\Issue;
 use App\Models\Comment;
+use App\Models\Notification;
 use App\Enums\Role; // Import Role enum
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash; // Import Hash
@@ -120,5 +121,24 @@ class DatabaseSeeder extends Seeder
              ->has(Issue::factory()->count(fake()->numberBetween(0, 1)))
              ->has(Comment::factory()->count(1)->recycle([$adminUser]), 'comments')
              ->create(['linkedPdrId' => null]); // Ensure not linked
+
+        // Create Notifications for users
+        $usersForNotifications = [$adminUser, $approverUser, $normalUser];
+        foreach ($usersForNotifications as $user) {
+            Notification::factory(fake()->numberBetween(2, 5))->create([
+                'recipientId' => $user->id,
+                'message' => 'This is a test notification for you: ' . fake()->sentence(4)
+            ]);
+
+            // Example of a more specific notification type if needed
+            if ($user->role === Role::APPROVER) {
+                Notification::factory()->create([
+                    'recipientId' => $user->id,
+                    'type' => 'status_update',
+                    'message' => 'A PDR is awaiting your approval.',
+                    'seen' => false,
+                ]);
+            }
+        }
     }
 }

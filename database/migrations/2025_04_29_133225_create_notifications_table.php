@@ -17,9 +17,13 @@ return new class extends Migration
             $table->string('type'); // Notification type (e.g., 'new_comment', 'assignment')
             $table->text('message');
             $table->boolean('seen')->default(false);
-            $table->uuidMorphs('entity'); // entityId, entityType
-            $table->timestamp('createdAt')->nullable(); // Only createdAt based on UML
-            // No default timestamps() to avoid updatedAt if not needed
+            
+            // Manually define nullable morph columns
+            $table->uuid('entity_id')->nullable();
+            $table->string('entity_type')->nullable();
+            $table->index(['entity_id', 'entity_type']); // Optional: add index if frequently queried
+
+            $table->timestamps(); // Add standard timestamps
         });
     }
 
