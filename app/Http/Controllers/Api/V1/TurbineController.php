@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Turbine;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use App\Enums\TurbineStatus;
+use Illuminate\Validation\Rule;
 
 class TurbineController extends Controller
 {
@@ -14,7 +15,7 @@ class TurbineController extends Controller
      */
     public function index()
     {
-        return Turbine::all();
+        return Turbine::orderBy('name')->get();
     }
 
     /**
@@ -22,20 +23,13 @@ class TurbineController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'model' => 'required|string|max:255',
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:turbines,name',
             'location' => 'required|string|max:255',
-            'commissioningDate' => 'required|date',
-            'notes' => 'nullable|string',
-            'status' => 'required|string|in:ACTIVE,INACTIVE,MAINTENANCE',
+            'status' => ['required', Rule::enum(TurbineStatus::class)],
         ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        $turbine = Turbine::create($validator->validated());
+        $turbine = Turbine::create($validated);
         return response()->json($turbine, 201);
     }
 
@@ -52,20 +46,13 @@ class TurbineController extends Controller
      */
     public function update(Request $request, Turbine $turbine)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|required|string|max:255',
-            'model' => 'sometimes|required|string|max:255',
+        $validated = $request->validate([
+            'name' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('turbines')->ignore($turbine->id)],
             'location' => 'sometimes|required|string|max:255',
-            'commissioningDate' => 'sometimes|required|date',
-            'notes' => 'nullable|string',
-            'status' => 'sometimes|required|string|in:ACTIVE,INACTIVE,MAINTENANCE',
+            'status' => ['sometimes', 'required', Rule::enum(TurbineStatus::class)],
         ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        $turbine->update($validator->validated());
+        $turbine->update($validated);
         return response()->json($turbine);
     }
 

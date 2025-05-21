@@ -47,4 +47,16 @@ class Planning extends Model
     {
         return $this->hasMany(PlanningAssignment::class, 'planningId');
     }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($planning) {
+            // Delete related planning assignments
+            $planning->assignments()->each(function ($assignment) {
+                $assignment->delete();
+            });
+        });
+    }
 } 

@@ -51,5 +51,27 @@ class Turbine extends Model
         static::creating(function ($model){
             $model->id = (string) Str::uuid();
         });
+
+        static::deleting(function ($turbine) {
+            // Delete related documents
+            $turbine->documents()->each(function ($document) {
+                $document->delete();
+            });
+
+            // Delete related plannings
+            $turbine->plannings()->each(function ($planning) {
+                $planning->delete();
+            });
+
+            // Delete related PDRs
+            $turbine->pdrs()->each(function ($pdr) {
+                $pdr->delete();
+            });
+
+            // Delete related revisions
+            $turbine->revisions()->each(function ($revision) {
+                $revision->delete();
+            });
+        });
     }
 }

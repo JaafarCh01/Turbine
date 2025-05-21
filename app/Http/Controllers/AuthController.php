@@ -82,4 +82,48 @@ class AuthController extends Controller
 
         return response()->noContent();
     }
+
+    /**
+     * Update the authenticated user's profile.
+     */
+    public function updateProfile(Request $request): Response
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . $user->id],
+        ]);
+
+        $user->fill([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ]);
+
+        $user->save();
+
+        return response()->noContent();
+    }
+
+    /**
+     * Update the authenticated user's password.
+     */
+    public function updatePassword(Request $request): Response
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'current_password' => ['required', 'string', function ($attribute, $value, $fail) use ($user) {
+                if (!Hash::check($value, $user->passwordHash)) {
+                    $fail('The :attribute is incorrect.');
+                }
+            }],
+            'password' => ['required', 'string', Rules\Password::defaults(), 'confirmed'],
+        ]);
+
+        $user->passwordHash = $validated['password']; // The mutator in User model will hash this
+        $user->save();
+
+        return response()->noContent();
+    }
 }
