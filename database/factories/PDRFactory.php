@@ -45,6 +45,7 @@ class PDRFactory extends Factory
 
         return [
             'turbineId' => Turbine::factory(),
+            'title' => fake()->sentence(4),
             'status' => $status,
             'createdBy' => User::factory(),
             'approverId' => $approverId,

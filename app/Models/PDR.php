@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class PDR extends Model // Consider renaming if PDR causes issues
 {
@@ -20,6 +21,7 @@ class PDR extends Model // Consider renaming if PDR causes issues
 
     protected $fillable = [
         'turbineId',
+        'title',
         'status',
         'createdBy',
         'approverId',
@@ -62,5 +64,10 @@ class PDR extends Model // Consider renaming if PDR causes issues
     public function generatedRevisions(): HasMany // Relation 'génère'
     {
         return $this->hasMany(Revision::class, 'linkedPdrId');
+    }
+
+    public function assignedUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'pdr_user', 'pdr_id', 'user_id');
     }
 } 

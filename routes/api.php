@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\CommentController;
 use App\Http\Controllers\Api\V1\PlanningAssignmentController;
 use App\Http\Controllers\Api\V1\PdrStepController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\UserController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -67,5 +68,8 @@ Route::get('/user', function (Request $request) {
         Route::patch('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
         Route::patch('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
         Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+
+        // User list route (for dropdowns etc.)
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
     });
 });

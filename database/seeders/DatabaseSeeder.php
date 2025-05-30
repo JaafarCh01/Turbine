@@ -5,8 +5,6 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\Turbine;
 use App\Models\Document;
-use App\Models\Planning;
-use App\Models\PlanningAssignment;
 use App\Models\PDR;
 use App\Models\PdrStep;
 use App\Models\Revision;
@@ -61,14 +59,6 @@ class DatabaseSeeder extends Seeder
         Document::factory(10)->recycle([$adminUser, $normalUser]) // Use existing users for uploader
                              ->recycle($turbines) // Use existing turbines
                              ->create();
-
-        // Create Plannings, assign Users and PlanningAssignments
-        Planning::factory(8)
-            ->recycle($turbines)
-            ->recycle([$adminUser, $approverUser]) // createdBy
-            ->has(PlanningAssignment::factory()->count(2) // Create 2 assignments per planning
-                ->recycle([$normalUser, $approverUser, $clientUser]), 'assignments') // Correct relationship name
-            ->create();
 
         // Create PDRs, Steps, Revisions, Tasks, Issues, Comments
         PDR::factory(6)

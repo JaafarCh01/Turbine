@@ -31,11 +31,6 @@ class Turbine extends Model
         return $this->hasMany(Document::class, 'turbineId');
     }
 
-    public function plannings(): HasMany
-    {
-        return $this->hasMany(Planning::class, 'turbineId');
-    }
-
     public function pdrs(): HasMany
     {
         return $this->hasMany(PDR::class, 'turbineId');
@@ -56,11 +51,6 @@ class Turbine extends Model
             // Delete related documents
             $turbine->documents()->each(function ($document) {
                 $document->delete();
-            });
-
-            // Delete related plannings
-            $turbine->plannings()->each(function ($planning) {
-                $planning->delete();
             });
 
             // Delete related PDRs

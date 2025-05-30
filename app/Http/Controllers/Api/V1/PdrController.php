@@ -18,19 +18,22 @@ class PdrController extends Controller
      */
     public function index(Request $request)
     {
-        $query = PDR::with(['turbine:id,name', 'creator:id,name', 'approver:id,name']);
+        $query = PDR::with(['turbine:id,name', 'creator:id,name', 'approver:id,name', 'assignedUsers:id,name']);
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-        if ($request->has('turbineId')) {
+        if ($request->filled('turbineId')) {
             $query->where('turbineId', $request->turbineId);
         }
-        if ($request->has('createdBy')) {
+        if ($request->filled('createdBy')) {
             $query->where('createdBy', $request->createdBy);
         }
-        if ($request->has('approverId')) {
+        if ($request->filled('approverId')) {
             $query->where('approverId', $request->approverId);
+        }
+        if ($request->filled('title_contains')) {
+            $query->where('title', 'like', '%' . $request->title_contains . '%');
         }
 
         return $query->latest()->paginate(15);
@@ -43,7 +46,10 @@ class PdrController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'turbineId' => 'required|uuid|exists:turbines,id',
+            'title' => 'required|string|max:255',
             'status' => ['sometimes', 'required', new Enum(PDRStatus::class)],
+            'assigned_user_ids' => 'nullable|array',
+            'assigned_user_ids.*' => 'uuid|exists:users,id'
         ]);
 
         if ($validator->fails()) {
@@ -58,7 +64,11 @@ class PdrController extends Controller
 
         $pdr = PDR::create($validatedData);
 
-        return response()->json($pdr->load(['turbine:id,name', 'creator:id,name', 'approver:id,name', 'steps']), 201);
+        if ($request->has('assigned_user_ids')) {
+            $pdr->assignedUsers()->sync($request->input('assigned_user_ids'));
+        }
+
+        return response()->json($pdr->load(['turbine:id,name', 'creator:id,name', 'approver:id,name', 'steps', 'assignedUsers:id,name']), 201);
     }
 
     /**
@@ -66,7 +76,7 @@ class PdrController extends Controller
      */
     public function show(PDR $pdr)
     {
-        return $pdr->load(['turbine:id,name', 'creator:id,name', 'approver:id,name', 'steps', 'comments.user:id,name', 'generatedRevisions']);
+        return $pdr->load(['turbine:id,name', 'creator:id,name', 'approver:id,name', 'steps', 'comments.user:id,name', 'generatedRevisions', 'assignedUsers:id,name']);
     }
 
     /**
@@ -76,7 +86,10 @@ class PdrController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'turbineId' => 'sometimes|required|uuid|exists:turbines,id',
+            'title' => 'sometimes|required|string|max:255',
             'status' => ['sometimes', 'required', new Enum(PDRStatus::class)],
+            'assigned_user_ids' => 'nullable|array',
+            'assigned_user_ids.*' => 'uuid|exists:users,id'
         ]);
 
         if ($validator->fails()) {
@@ -84,7 +97,12 @@ class PdrController extends Controller
         }
 
         $pdr->update($validator->validated());
-        return response()->json($pdr->load(['turbine:id,name', 'creator:id,name', 'approver:id,name', 'steps']));
+
+        if ($request->has('assigned_user_ids')) {
+            $pdr->assignedUsers()->sync($request->input('assigned_user_ids'));
+        }
+
+        return response()->json($pdr->load(['turbine:id,name', 'creator:id,name', 'approver:id,name', 'steps', 'assignedUsers:id,name']));
     }
 
     /**
@@ -95,6 +113,12 @@ class PdrController extends Controller
         if ($pdr->status === PDRStatus::APPROVED) {
             return response()->json(['message' => 'Cannot delete an approved PDR.'], 403);
         }
+
+        // Check for linked revisions
+        if ($pdr->generatedRevisions()->exists()) {
+            return response()->json(['message' => 'Cannot delete this PDR because it is linked to one or more revisions. Please delete or unlink the revisions first.'], 409); // 409 Conflict
+        }
+
         $pdr->delete();
         return response()->json(null, 204);
     }
@@ -110,7 +134,7 @@ class PdrController extends Controller
         $pdr->approvedAt = now();
         $pdr->save();
 
-        return response()->json($pdr->load(['turbine:id,name', 'creator:id,name', 'approver:id,name']));
+        return response()->json($pdr->load(['turbine:id,name', 'creator:id,name', 'approver:id,name', 'assignedUsers:id,name']));
     }
 
     public function reject(Request $request, PDR $pdr)
@@ -124,6 +148,6 @@ class PdrController extends Controller
         $pdr->approvedAt = null;
         $pdr->save();
 
-        return response()->json($pdr->load(['turbine:id,name', 'creator:id,name', 'approver:id,name']));
+        return response()->json($pdr->load(['turbine:id,name', 'creator:id,name', 'approver:id,name', 'assignedUsers:id,name']));
     }
 }
