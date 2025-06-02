@@ -59,7 +59,14 @@ class RevisionController extends Controller
      */
     public function show(Revision $revision)
     {
-        return $revision->load(['turbine:id,name', 'linkedPdr:id', 'performer:id,name', 'tasks', 'issues', 'comments.user:id,name']);
+        return $revision->load([
+            'turbine:id,name', 
+            'pdr:id,title',
+            'performer:id,name', 
+            'tasks', 
+            'issues', 
+            'comments.user:id,name'
+        ]);
     }
 
     /**

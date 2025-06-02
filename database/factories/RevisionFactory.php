@@ -30,7 +30,8 @@ class RevisionFactory extends Factory
         return [
             'turbineId' => Turbine::factory(),
             'revisionDate' => fake()->dateTimeThisYear(),
-            'linkedPdrId' => fake()->boolean(75) ? PDR::factory() : null,
+            'pdr_id' => fake()->boolean(75) ? PDR::factory() : null,
+            'status' => \App\Enums\RevisionStatus::PENDING->value,
             'performedBy' => User::factory(),
         ];
     }

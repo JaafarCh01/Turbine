@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Enums\TaskStatus;
 
 return new class extends Migration
 {
@@ -13,11 +14,14 @@ return new class extends Migration
     {
         Schema::create('tasks', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('revisionId')->constrained('revisions');
+            $table->foreignUuid('revisionId')->constrained('revisions')->onDelete('cascade');
             $table->string('description');
+            $table->integer('ordre')->default(0);
+            $table->string('status')->default(TaskStatus::TODO->value);
             $table->dateTime('plannedAt')->nullable(); // Assuming nullable
             $table->dateTime('doneAt')->nullable(); // Assuming nullable
             // No timestamps based on UML
+            $table->timestamps();
         });
     }
 

@@ -80,7 +80,7 @@ class DatabaseSeeder extends Seeder
                      Revision::factory()
                          ->for($pdr->turbine) // Use the same turbine as the PDR
                          ->create([
-                             'linkedPdrId' => $pdr->id,
+                             'pdr_id' => $pdr->id,
                              'performedBy' => $approverUser->id, // Example: Approver performs revision
                              'revisionDate' => fake()->dateTimeBetween($pdr->createdAt, '+1 month'),
                          ])
@@ -110,7 +110,7 @@ class DatabaseSeeder extends Seeder
              ->has(Task::factory()->count(fake()->numberBetween(2, 5)))
              ->has(Issue::factory()->count(fake()->numberBetween(0, 1)))
              ->has(Comment::factory()->count(1)->recycle([$adminUser]), 'comments')
-             ->create(['linkedPdrId' => null]); // Ensure not linked
+             ->create(['pdr_id' => null]); // Changed
 
         // Create Notifications for users
         $usersForNotifications = [$adminUser, $approverUser, $normalUser];

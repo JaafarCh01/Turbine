@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TaskStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,18 +14,23 @@ class Task extends Model
 
     public $incrementing = false;
     protected $keyType = 'uuid';
-    public $timestamps = false; // Assuming no timestamps based on UML
+    // public $timestamps = false; // Changed - Timestamps are now enabled by default
 
     protected $fillable = [
         'revisionId',
         'description',
+        'ordre',
+        'status',
         'plannedAt',
         'doneAt',
     ];
 
     protected $casts = [
+        'status' => TaskStatus::class,
         'plannedAt' => 'datetime',
         'doneAt' => 'datetime',
+        'createdAt' => 'datetime',
+        'updatedAt' => 'datetime',
     ];
 
     // Relationships from UML

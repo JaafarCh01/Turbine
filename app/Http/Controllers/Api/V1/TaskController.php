@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Revision; // For route model binding
 use App\Models\Task;
+use App\Enums\TaskStatus;
+use Illuminate\Validation\Rules\Enum;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
@@ -57,8 +59,10 @@ class TaskController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'description' => 'sometimes|required|string|max:65535',
-            'plannedAt' => 'sometimes|required|date',
+            'plannedAt' => 'sometimes|date',
             'doneAt' => 'nullable|date|after_or_equal:plannedAt',
+            'status' => ['sometimes', 'required', new Enum(TaskStatus::class)],
+            'ordre' => ['sometimes', 'required', 'integer', 'min:1'],
         ]);
 
         if ($validator->fails()) {
@@ -66,7 +70,7 @@ class TaskController extends Controller
         }
 
         $task->update($validator->validated());
-        return response()->json($task);
+        return response()->json($task->load('revision:id,revisionDate'));
     }
 
     /**

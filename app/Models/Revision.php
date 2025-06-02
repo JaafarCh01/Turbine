@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\RevisionStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,14 +20,16 @@ class Revision extends Model
     protected $fillable = [
         'turbineId',
         'revisionDate',
-        'linkedPdrId',
+        'pdr_id',
         'performedBy',
+        'status',
     ];
 
     protected $casts = [
         'revisionDate' => 'datetime',
-        'createdAt' => 'datetime',
-        'updatedAt' => 'datetime',
+        'status' => RevisionStatus::class,
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     // Relationships from UML
@@ -35,12 +38,12 @@ class Revision extends Model
         return $this->belongsTo(Turbine::class, 'turbineId');
     }
 
-    public function linkedPdr(): BelongsTo // Relation 'génère' (inverse)
+    public function pdr(): BelongsTo
     {
-        return $this->belongsTo(PDR::class, 'linkedPdrId');
+        return $this->belongsTo(PDR::class, 'pdr_id');
     }
 
-    public function performer(): BelongsTo // Renamed from performedBy
+    public function performer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'performedBy');
     }

@@ -34,6 +34,8 @@ class TaskFactory extends Factory
         return [
             'revisionId' => Revision::factory(),
             'description' => fake()->sentence(),
+            'ordre' => fake()->numberBetween(1, 10),
+            'status' => fake()->randomElement(\App\Enums\TaskStatus::cases())->value,
             'plannedAt' => $plannedAt,
             'doneAt' => $doneAt,
         ];

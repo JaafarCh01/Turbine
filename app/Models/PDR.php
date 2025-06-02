@@ -61,9 +61,9 @@ class PDR extends Model // Consider renaming if PDR causes issues
         return $this->morphMany(Comment::class, 'commentable'); // Assuming polymorphic
     }
 
-    public function generatedRevisions(): HasMany // Relation 'génère'
+    public function revision(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->hasMany(Revision::class, 'linkedPdrId');
+        return $this->hasOne(Revision::class, 'pdr_id');
     }
 
     public function assignedUsers(): BelongsToMany
