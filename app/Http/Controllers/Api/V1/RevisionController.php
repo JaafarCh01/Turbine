@@ -15,19 +15,62 @@ class RevisionController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Revision::with(['turbine:id,name', 'linkedPdr:id', 'performer:id,name']);
+        $query = Revision::query();
 
-        if ($request->has('turbineId')) {
-            $query->where('turbineId', $request->turbineId);
+        $query->with([
+            'pdr:id,title',
+            'turbine:id,name',
+            'performer:id,name',
+            'tasks:id,revisionId,status'
+        ]);
+
+        if ($request->has('search') && $request->filled('search')) {
+            $searchTerm = $request->input('search');
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('id', 'like', '%' . $searchTerm . '%')
+                  ->orWhereHas('pdr', function ($pdrQuery) use ($searchTerm) {
+                      $pdrQuery->where('title', 'like', '%' . $searchTerm . '%');
+                  })
+                  ->orWhereHas('turbine', function ($turbineQuery) use ($searchTerm) {
+                      $turbineQuery->where('name', 'like', '%' . $searchTerm . '%');
+                  })
+                  ->orWhereHas('performer', function ($userQuery) use ($searchTerm) {
+                      $userQuery->where('name', 'like', '%' . $searchTerm . '%');
+                  });
+            });
         }
-        if ($request->has('linkedPdrId')) {
-            $query->where('linkedPdrId', $request->linkedPdrId);
-        }
-        if ($request->has('performedBy')) {
-            $query->where('performedBy', $request->performedBy);
+        
+        // Filter by status
+        if ($request->has('status') && $request->filled('status')) {
+            $query->where('status', $request->input('status'));
         }
 
-        return $query->latest()->paginate(15);
+        // Filter by turbine
+        if ($request->has('turbine_id') && $request->filled('turbine_id')) {
+           $query->where('turbineId', $request->input('turbine_id'));
+        }
+
+        // Filter by date range
+        if ($request->has('date_from') && $request->filled('date_from')) {
+            $query->whereDate('revisionDate', '>=', $request->input('date_from'));
+        }
+        if ($request->has('date_to') && $request->filled('date_to')) {
+            $query->whereDate('revisionDate', '<=', $request->input('date_to'));
+        }
+
+        // Filter by PDR presence
+        if ($request->has('has_pdr')) {
+            $hasPdr = filter_var($request->input('has_pdr'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($hasPdr === true) {
+                $query->whereNotNull('pdr_id');
+            } elseif ($hasPdr === false) {
+                $query->whereNull('pdr_id');
+            }
+        }
+
+        $revisions = $query->orderBy('created_at', 'desc')->paginate(15)->appends($request->query());
+
+        return response()->json($revisions); 
     }
 
     /**
@@ -35,23 +78,8 @@ class RevisionController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'turbineId' => 'required|uuid|exists:turbines,id',
-            'revisionDate' => 'required|date',
-            'linkedPdrId' => 'nullable|uuid|exists:pdrs,id',
-            // 'performedBy' is set automatically
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        $validatedData = $validator->validated();
-        $validatedData['performedBy'] = Auth::id();
-
-        $revision = Revision::create($validatedData);
-
-        return response()->json($revision->load(['turbine:id,name', 'linkedPdr:id', 'performer:id,name', 'tasks', 'issues']), 201);
+        // TODO: Implement store method for ad-hoc revision creation if needed.
+        return response()->json(['message' => 'Store method not implemented'], 501);
     }
 
     /**
@@ -59,14 +87,16 @@ class RevisionController extends Controller
      */
     public function show(Revision $revision)
     {
-        return $revision->load([
-            'turbine:id,name', 
+        $revision->load([
+            'turbine:id,name',
             'pdr:id,title',
-            'performer:id,name', 
-            'tasks', 
-            'issues', 
+            'performer:id,name',
+            'tasks',
+            'issues.user:id,name',
             'comments.user:id,name'
         ]);
+        
+        return response()->json($revision);
     }
 
     /**
@@ -74,19 +104,27 @@ class RevisionController extends Controller
      */
     public function update(Request $request, Revision $revision)
     {
-        $validator = Validator::make($request->all(), [
+        $validatedData = $request->validate([
             'turbineId' => 'sometimes|required|uuid|exists:turbines,id',
             'revisionDate' => 'sometimes|required|date',
-            'linkedPdrId' => 'sometimes|nullable|uuid|exists:pdrs,id',
-            // performedBy is not typically updatable, or only by admins
+            'pdr_id' => 'sometimes|nullable|uuid|exists:pdrs,id',
+            'performedBy' => 'sometimes|required|uuid|exists:users,id',
+            'status' => 'sometimes|required|string|in:pending,in_progress,completed,cancelled'
         ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
+        $revision->update($validatedData);
+        
+        // Load relationships for the response
+        $revision->load([
+            'turbine:id,name',
+            'pdr:id,title',
+            'performer:id,name',
+            'tasks',
+            'issues.user:id,name',
+            'comments.user:id,name'
+        ]);
 
-        $revision->update($validator->validated());
-        return response()->json($revision->load(['turbine:id,name', 'linkedPdr:id', 'performer:id,name', 'tasks', 'issues']));
+        return response()->json($revision);
     }
 
     /**

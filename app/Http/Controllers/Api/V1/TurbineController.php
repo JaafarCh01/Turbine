@@ -12,9 +12,20 @@ class TurbineController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return Turbine::all();
+        // Check if this is a request for dropdown data (minimal fields)
+        if ($request->has('for_dropdown') && $request->input('for_dropdown') === 'true') {
+            $turbines = Turbine::select('id', 'name')->orderBy('name')->get();
+            return response()->json($turbines);
+        }
+
+        // Full data for turbines list view
+        $turbines = Turbine::select('id', 'name', 'location', 'status', 'created_at', 'updated_at')
+            ->orderBy('name')
+            ->get();
+        
+        return response()->json($turbines);
     }
 
     /**
@@ -44,7 +55,7 @@ class TurbineController extends Controller
      */
     public function show(Turbine $turbine)
     {
-        return $turbine;
+        return response()->json($turbine);
     }
 
     /**
