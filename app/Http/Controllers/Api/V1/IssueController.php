@@ -13,6 +13,46 @@ use Illuminate\Validation\Rules\Enum;
 class IssueController extends Controller
 {
     /**
+     * Display a global listing of all issues across all revisions.
+     */
+    public function indexAll(Request $request)
+    {
+        $query = Issue::with([
+            'revision:id,revisionDate,turbineId,performedBy',
+            'revision.turbine:id,name',
+            'revision.performer:id,name'
+        ]);
+
+        // Filter by severity
+        if ($request->has('severity') && $request->filled('severity')) {
+            $query->where('severity', $request->input('severity'));
+        }
+
+        // Filter by turbine
+        if ($request->has('turbine_id') && $request->filled('turbine_id')) {
+            $query->whereHas('revision', function ($q) use ($request) {
+                $q->where('turbineId', $request->input('turbine_id'));
+            });
+        }
+
+        // Filter by date range
+        if ($request->has('date_from') && $request->filled('date_from')) {
+            $query->whereDate('reportedAt', '>=', $request->input('date_from'));
+        }
+        if ($request->has('date_to') && $request->filled('date_to')) {
+            $query->whereDate('reportedAt', '<=', $request->input('date_to'));
+        }
+
+        // Search in description
+        if ($request->has('search') && $request->filled('search')) {
+            $searchTerm = $request->input('search');
+            $query->where('description', 'like', '%' . $searchTerm . '%');
+        }
+
+        return $query->orderBy('reportedAt', 'desc')->paginate(15);
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Revision $revision)

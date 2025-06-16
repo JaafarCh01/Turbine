@@ -44,6 +44,9 @@ Route::get('/user', function (Request $request) {
         Route::apiResource('revisions.tasks', TaskController::class)->shallow();
         Route::apiResource('revisions.issues', IssueController::class)->shallow();
 
+        // Global issues endpoint for fetching all issues across revisions
+        Route::get('issues', [IssueController::class, 'indexAll'])->name('issues.indexAll');
+
         // Routes for managing individual comments (show, update, destroy)
         Route::apiResource('comments', CommentController::class)->only([
             'show', 'update', 'destroy'
