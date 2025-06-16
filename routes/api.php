@@ -5,13 +5,13 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\V1\TurbineController;
 use App\Http\Controllers\Api\V1\DocumentController;
-use App\Http\Controllers\Api\V1\PlanningController;
+
 use App\Http\Controllers\Api\V1\PdrController;
 use App\Http\Controllers\Api\V1\RevisionController;
 use App\Http\Controllers\Api\V1\TaskController;
 use App\Http\Controllers\Api\V1\IssueController;
 use App\Http\Controllers\Api\V1\CommentController;
-use App\Http\Controllers\Api\V1\PlanningAssignmentController;
+
 use App\Http\Controllers\Api\V1\PdrStepController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\UserController;
@@ -34,7 +34,7 @@ Route::get('/user', function (Request $request) {
         Route::apiResource('turbines', TurbineController::class);
         Route::get('documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
         Route::apiResource('documents', DocumentController::class);
-        Route::apiResource('plannings', PlanningController::class);
+    
 
         Route::post('pdrs/{pdr}/approve', [PdrController::class, 'approve'])->name('pdrs.approve');
         Route::post('pdrs/{pdr}/reject', [PdrController::class, 'reject'])->name('pdrs.reject');
@@ -63,7 +63,7 @@ Route::get('/user', function (Request $request) {
         Route::post('revisions/{revision}/comments', [CommentController::class, 'storeForRevision'])->name('revisions.comments.store');
 
         // Nested resources for PlanningAssignments and PdrSteps
-        Route::apiResource('plannings.assignments', PlanningAssignmentController::class)->shallow();
+    
         Route::apiResource('pdrs.steps', PdrStepController::class)->shallow();
 
         // Notification routes
