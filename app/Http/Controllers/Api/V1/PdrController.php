@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\PDR;
+use App\Models\User;
 use App\Enums\PDRStatus;
 use App\Models\PdrStep;
 use App\Models\Revision;
 use App\Models\Task;
 use App\Enums\RevisionStatus;
 use App\Enums\TaskStatus;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Enum;
@@ -18,6 +20,13 @@ use Illuminate\Support\Facades\DB;
 
 class PdrController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -202,6 +211,21 @@ class PdrController extends Controller
                     'status' => TaskStatus::TODO,
                 ]);
             }
+
+            // Send notification to PDR creator
+            if ($pdr->creator) {
+                $this->notificationService->notifyPdrApproved(
+                    $pdr->creator, 
+                    $pdr, 
+                    Auth::user()
+                );
+            }
+
+            // Send notification to the assigned performer
+            $performer = User::find($request->input('performed_by_user_id'));
+            if ($performer) {
+                $this->notificationService->notifyRevisionAssigned($performer, $revision);
+            }
         });
 
         return response()->json($pdr->load(['turbine:id,name', 'creator:id,name', 'approver:id,name', 'assignedUsers:id,name', 'revision.tasks', 'revision.performer:id,name', 'steps']));
@@ -220,6 +244,11 @@ class PdrController extends Controller
         $pdr->status = PDRStatus::REJECTED;
         $pdr->approverId = Auth::id();
         $pdr->save();
+
+        // Send notification to PDR creator
+        if ($pdr->creator) {
+            $this->notificationService->notifyPdrRejected($pdr->creator, $pdr);
+        }
 
         return response()->json($pdr->load(['turbine:id,name', 'creator:id,name', 'approver:id,name', 'assignedUsers:id,name', 'comments']));
     }
